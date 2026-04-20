@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiSight v2 – E-Commerce BI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--bg2:#111318;--bg3:#181c24;--bg4:#1e2330;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--border3:rgba(255,255,255,0.18);
+  --text:#e8eaf0;--text2:#8b909e;--text3:#555b6a;
+  --accent:#4f7cff;--accent2:#7c5fff;
+  --green:#22d3a0;--amber:#f5a623;--red:#f06060;--teal:#0ec6d5;--pink:#d97ef5;
+  --font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;min-height:100vh}
+.shell{display:flex;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.logo-text{font-size:13px;font-weight:600;letter-spacing:.05em}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+nav{padding:12px 10px;flex:1}
+.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);padding:8px 8px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(79,124,255,.12);color:var(--accent);border-color:rgba(79,124,255,.2)}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.api-status{margin:12px 10px;padding:8px 10px;border-radius:8px;font-size:11px;display:flex;align-items:center;gap:7px}
+.api-status.ok{background:rgba(34,211,160,.08);color:var(--green);border:1px solid rgba(34,211,160,.15)}
+.api-status.err{background:rgba(240,96,96,.08);color:var(--red);border:1px solid rgba(240,96,96,.15)}
+.api-status.wait{background:rgba(139,144,158,.08);color:var(--text3);border:1px solid var(--border)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* ── Topbar ── */
+.main{flex:1;overflow-x:hidden;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:20;gap:16px}
+.topbar-left{min-width:0}
+.topbar-title{font-size:15px;font-weight:500}
+.topbar-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.topbar-actions{display:flex;gap:8px;flex-shrink:0}
+.btn{padding:6px 14px;border-radius:7px;font-size:12px;font-family:var(--font);cursor:pointer;font-weight:500;transition:all .15s;border:1px solid}
+.btn-ghost{background:transparent;border-color:var(--border2);color:var(--text2)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.85}
+.btn-danger{background:transparent;border-color:rgba(240,96,96,.3);color:var(--red)}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;align-items:center;gap:10px;padding:10px 24px;background:var(--bg3);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.filter-bar label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.filter-bar select,.filter-bar input[type=date]{background:var(--bg2);border:1px solid var(--border2);border-radius:7px;padding:5px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;cursor:pointer}
+.filter-bar select:focus,.filter-bar input[type=date]:focus{border-color:var(--accent)}
+.filter-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
+.active-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filter-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;background:rgba(79,124,255,.12);border:1px solid rgba(79,124,255,.2);border-radius:5px;font-size:11px;color:var(--accent)}
+.filter-chip button{background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;line-height:1;padding:0}
+
+/* ── Content ── */
+.content{padding:20px 24px}
+.page{display:none}.page.active{display:block}
+
+/* ── KPI grid ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .2s}
+.kpi:hover{border-color:var(--border2)}
+.kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
+.kpi-value{font-size:22px;font-weight:600;margin:5px 0 3px;font-family:var(--mono)}
+.kpi-delta{font-size:11px;display:flex;align-items:center;gap:4px}
+.up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--text3)}
+
+/* ── Cards & charts ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:0}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:14px}
+.chart-row{display:grid;gap:14px;margin-bottom:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:2fr 1fr}
+.g1{grid-template-columns:1fr}
+.chart-wrap{position:relative;width:100%}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:7px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);border-bottom:1px solid var(--border);font-weight:500}
+td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
+.sortable{cursor:pointer;user-select:none}
+.sortable:hover{color:var(--text)}
+.sort-icon{margin-left:4px;opacity:.5}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500;font-family:var(--mono)}
+.bg{background:rgba(34,211,160,.1);color:var(--green)}
+.ba{background:rgba(245,166,35,.1);color:var(--amber)}
+.br{background:rgba(240,96,96,.1);color:var(--red)}
+.bb{background:rgba(79,124,255,.1);color:var(--accent)}
+.bp{background:rgba(124,95,255,.1);color:var(--accent2)}
+.bt{background:rgba(14,198,213,.1);color:var(--teal)}
+.bk{background:rgba(217,126,245,.1);color:var(--pink)}
+
+/* ── Insights ── */
+.insights{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.insight{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);transition:border-color .2s}
+.insight:hover{border-color:var(--border2)}
+.insight.anomaly{border-color:rgba(240,96,96,.25);background:rgba(240,96,96,.04)}
+.insight.warning{border-color:rgba(245,166,35,.25);background:rgba(245,166,35,.04)}
+.insight.danger{border-color:rgba(240,96,96,.2);background:rgba(240,96,96,.03)}
+.insight-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── Progress bar ── */
+.progress{background:var(--bg3);border-radius:4px;height:5px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s ease}
+
+/* ── Loader / spinner ── */
+.loader{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:13px;padding:20px 0}
+.spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.page-loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;color:var(--text3);font-size:13px}
+
+/* ── Upload zone ── */
+.upload-zone{border:2px dashed var(--border2);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3)}
+.upload-zone:hover,.upload-zone.dragging{border-color:var(--accent);background:rgba(79,124,255,.04)}
+.upload-icon{font-size:32px;margin-bottom:10px}
+.upload-text{color:var(--text2);font-size:14px}
+.upload-hint{color:var(--text3);font-size:12px;margin-top:6px}
+
+/* ── Forecast controls ── */
+.fc-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+.fc-group{display:flex;flex-direction:column;gap:5px}
+.fc-group label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.fc-group select{background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none}
+.fc-group select:focus{border-color:var(--accent)}
+
+/* ── Optimizer form ── */
+.opt-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.form-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px}
+.form-group input,.form-group select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.form-group input[type=range]{padding:0;height:4px;accent-color:var(--accent);cursor:pointer;margin-top:4px}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-val{font-family:var(--mono);font-size:13px;color:var(--accent);min-width:38px}
+
+/* ── Corr matrix ── */
+.corr-wrap{overflow-x:auto}
+
+/* ── Section header ── */
+.section-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:10px}
+.section-title{font-size:14px;font-weight:500}
+.section-sub{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* ── Drill-down modal ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:640px;max-height:80vh;overflow-y:auto;padding:24px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-title{font-size:15px;font-weight:500}
+.modal-close{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--text)}
+
+/* ── Anomaly row highlight ── */
+tr.anomaly td{background:rgba(240,96,96,.04)!important;color:var(--text)!important}
+.anom-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;background:rgba(240,96,96,.12);border-radius:4px;font-size:10px;color:var(--red);font-family:var(--mono)}
+
+/* ── API URL config ── */
+.api-config{padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.api-config input{flex:1;background:transparent;border:none;color:var(--text2);font-family:var(--mono);font-size:12px;outline:none}
+.api-config label{font-size:11px;color:var(--text3);white-space:nowrap;text-transform:uppercase;letter-spacing:.07em}
+
+/* responsive */
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.opt-form{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <div class="logo-icon">📊</div>
+      <div><div class="logo-text">BiSight v2</div><div class="logo-sub">E-Commerce BI</div></div>
+    </div>
+  </div>
+
+  <div class="api-status wait" id="api-status-badge">
+    <div class="status-dot"></div>
+    <span id="api-status-text">Chưa kết nối API</span>
+  </div>
+
+  <nav>
+    <div class="nav-section">Phân tích</div>
+    <div class="nav-item active" onclick="nav('overview',this)"><div class="nav-dot"></div>Tổng quan</div>
+    <div class="nav-section">Mô hình</div>
+    <div class="nav-item" onclick="nav('rfm',this)"><div class="nav-dot"></div>Phân khúc RFM</div>
+    <div class="nav-item" onclick="nav('forecast',this)"><div class="nav-dot"></div>Dự báo & Kế hoạch</div>
+    <div class="nav-item" onclick="nav('optimizer',this)"><div class="nav-dot"></div>Tối ưu budget</div>
+    <div class="nav-section">Hệ thống</div>
+    <div class="nav-item" onclick="nav('data',this)"><div class="nav-dot"></div>Tải dữ liệu</div>
+  </nav>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+<!-- Global filter bar -->
+<div class="filter-bar" id="global-filter-bar" style="display:none">
+  <label>Từ</label>
+  <input type="date" id="f-from" onchange="applyFilters()">
+  <label>Đến</label>
+  <input type="date" id="f-to" onchange="applyFilters()">
+  <div class="filter-sep"></div>
+  <label>Danh mục</label>
+  <select id="f-cat" onchange="applyFilters()"><option value="">Tất cả</option></select>
+  <label>Khu vực</label>
+  <select id="f-region" onchange="applyFilters()"><option value="">Tất cả</option></select>
+  <div class="filter-sep"></div>
+  <div class="active-filters" id="active-filter-chips"></div>
+  <button class="btn btn-ghost" onclick="resetFilters()" style="margin-left:auto">Xóa filter</button>
+</div>
+
+<!-- ════ OVERVIEW ════ -->
+<div id="page-overview" class="page active">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Tổng quan kinh doanh</div><div class="topbar-sub" id="ov-sub">Chưa có dữ liệu — upload CSV để bắt đầu</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="nav('data',document.querySelectorAll('.nav-item')[4])">Upload CSV ↑</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="ov-insights" class="insights"></div>
+    <div class="kpi-grid" id="ov-kpis">
+      <div class="kpi"><div class="kpi-label">Tổng doanh thu</div><div class="kpi-value" style="color:var(--text3)">—</div></div>
+      <div class="kpi"><div class="kpi-label">Tổng lợi nhuận</div><div class="kpi-value" style="color:var(--text3)">—</div></div>
+      <div class="kpi"><div class="kpi-label">AOV</div><div class="kpi-value" style="color:var(--text3)">—</div></div>
+      <div class="kpi"><div class="kpi-label">Tỷ lệ hoàn trả</div><div class="kpi-value" style="color:var(--text3)">—</div></div>
+    </div>
+    <div class="chart-row g3">
+      <div class="card">
+        <div class="section-header">
+          <div><div class="section-title">Doanh thu theo tháng</div><div class="section-sub">Điểm đỏ = anomaly phát hiện bởi IQR</div></div>
+        </div>
+        <div class="chart-wrap" style="height:220px"><canvas id="c-trend"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Phân bổ danh mục</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="c-cat-pie"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-row g2">
+      <div class="card">
+        <div class="card-title">Doanh thu & profit rate theo khu vực</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="c-region"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div><div class="section-title">Profit rate theo danh mục</div></div>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="c-profit-cat"></canvas></div>
+      </div>
+    </div>
+    <!-- Monthly table with drill-down -->
+    <div class="card">
+      <div class="section-header">
+        <div><div class="section-title">Chi tiết theo tháng</div><div class="section-sub">Nhấp vào hàng để drill-down</div></div>
+      </div>
+      <table>
+        <thead><tr>
+          <th class="sortable" onclick="sortTable('ov-monthly-body',0)">Tháng <span class="sort-icon">↕</span></th>
+          <th class="sortable" onclick="sortTable('ov-monthly-body',1)">Doanh thu <span class="sort-icon">↕</span></th>
+          <th class="sortable" onclick="sortTable('ov-monthly-body',2)">Lợi nhuận <span class="sort-icon">↕</span></th>
+          <th class="sortable" onclick="sortTable('ov-monthly-body',3)">Đơn hàng <span class="sort-icon">↕</span></th>
+          <th>MoM %</th><th>Trạng thái</th>
+        </tr></thead>
+        <tbody id="ov-monthly-body"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="section-header">
+        <div><div class="section-title">Khám phá dữ liệu</div><div class="section-sub">EDA từ dữ liệu thực</div></div>
+      </div>
+      <div id="ov-eda-content">
+        <div class="page-loader"><div class="spinner"></div>Đang chờ dữ liệu…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════ RFM ════ -->
+<div id="page-rfm" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Phân khúc khách hàng RFM</div><div class="topbar-sub">Scoring từ dữ liệu thực · chia budget theo segment</div></div>
+  </div>
+  <div class="content">
+    <div class="card" style="margin-bottom:14px;padding:14px 16px">
+      <div class="section-header" style="margin-bottom:8px">
+        <div><div class="section-title">Budget cho mô hình RFM</div><div class="section-sub">Ngân sách sẽ được phân bổ theo sức nặng của từng segment, không dùng voucher cố định.</div></div>
+      </div>
+      <div class="opt-form" style="margin-bottom:0">
+        <div class="form-group"><label>Tổng budget chăm sóc khách hàng</label><input type="number" id="rfm-budget" value="5000000" oninput="scheduleRFM()"></div>
+      </div>
+    </div>
+    <div id="rfm-content">
+      <div class="page-loader"><div class="spinner"></div>Đang chờ dữ liệu…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ FORECAST ════ -->
+<div id="page-forecast" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Dự báo & Kế hoạch</div><div class="topbar-sub">SARIMA + GBM Ensemble · Walk-forward CV · Holiday-aware</div></div>
+  </div>
+  <div class="content">
+    <div class="fc-bar">
+      <div class="fc-group"><label>Mục tiêu dự báo</label>
+        <select id="fc-target" onchange="loadForecast()">
+          <option value="revenue">Doanh thu (Revenue)</option>
+          <option value="quantity">Số lượng (Quantity)</option>
+          <option value="orders">Số đơn hàng (Orders)</option>
+        </select>
+      </div>
+      <div class="fc-group"><label>Horizon</label>
+        <select id="fc-horizon" onchange="loadForecast()"><option value="4">4 tuần</option><option value="8" selected>8 tuần</option><option value="12">12 tuần</option><option value="16">16 tuần</option></select>
+      </div>
+      <div class="fc-group"><label>Mô hình</label>
+        <select id="fc-model" onchange="loadForecast()"><option value="ensemble">Ensemble</option><option value="gbm">GBM only</option><option value="sarima">SARIMA only</option></select>
+      </div>
+      <div class="fc-group"><label>Kịch bản</label>
+        <select id="fc-scenario" onchange="loadForecast()"><option value="base">Base</option><option value="optimistic">Tăng trưởng +15%</option><option value="pessimistic">Thận trọng −10%</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="loadForecast()" style="align-self:flex-end">Chạy dự báo</button>
+    </div>
+    <div id="forecast-content">
+      <div class="page-loader"><div class="spinner"></div>Đang chờ dữ liệu…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ OPTIMIZER ════ -->
+<div id="page-optimizer" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Tối ưu phân bổ budget</div><div class="topbar-sub">SLSQP solver · hỗ trợ forecast Revenue / Quantity / Orders</div></div>
+  </div>
+  <div class="content">
+    <div class="card" style="margin-bottom:14px;padding:14px 16px">
+      <div class="section-header" style="margin-bottom:8px">
+        <div>
+          <div class="section-title">Điều kiện chạy optimizer</div>
+          <div class="section-sub">Phải chạy forecast trước. Optimizer có thể dùng cả <b>Revenue</b>, <b>Quantity</b> hoặc <b>Orders</b> làm đầu vào để suy ra demand theo danh mục.</div>
+        </div>
+      </div>
+      <div id="opt-forecast-status" style="font-size:12px;color:var(--text3)">Chưa có forecast hợp lệ</div>
+    </div>
+    <div class="opt-form">
+      <div class="form-group"><label>Ngân sách voucher</label><input type="number" id="opt-budget" value="5000000" oninput="scheduleOpt()"></div>
+      <div class="form-group"><label>Chiến lược</label>
+        <select id="opt-strategy" onchange="scheduleOpt()">
+          <option value="revenue">Tối đa doanh thu</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Margin sàn</label>
+        <div class="slider-row">
+          <input type="range" id="opt-margin" min="0.05" max="0.40" step="0.01" value="0.15" oninput="document.getElementById('opt-margin-v').textContent=Math.round(this.value*100)+'%';scheduleOpt()">
+          <span class="slider-val" id="opt-margin-v">15%</span>
+        </div>
+      </div>
+      <div class="form-group"><label>Discount tối đa</label>
+        <div class="slider-row">
+          <input type="range" id="opt-maxd" min="0.05" max="0.50" step="0.01" value="0.30" oninput="document.getElementById('opt-maxd-v').textContent=Math.round(this.value*100)+'%';scheduleOpt()">
+          <span class="slider-val" id="opt-maxd-v">30%</span>
+        </div>
+      </div>
+    </div>
+    <div id="optimizer-content">
+      <div class="page-loader"><div class="spinner"></div>Đang chờ dữ liệu…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DATA ════ -->
+<div id="page-data" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Kết nối & dữ liệu</div><div class="topbar-sub">Cấu hình API và upload CSV</div></div>
+  </div>
+  <div class="content">
+    <div class="api-config">
+      <label>API URL</label>
+      <input type="text" id="api-url-input" value="http://localhost:8000" placeholder="http://localhost:8000">
+      <button class="btn btn-ghost" onclick="checkApi()">Kiểm tra</button>
+      <button class="btn btn-primary" onclick="saveApiUrl()">Lưu</button>
+    </div>
+    <div class="upload-zone" id="upload-zone"
+      ondragover="event.preventDefault();this.classList.add('dragging')"
+      ondragleave="this.classList.remove('dragging')"
+      ondrop="handleDrop(event)"
+      onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept=".csv" style="display:none" onchange="uploadFile(this.files[0])">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text">Kéo thả hoặc nhấn để chọn file CSV</div>
+      <div class="upload-hint">ecommerce_sales_34500.csv · Tối đa 50MB</div>
+    </div>
+    <div id="upload-status" style="margin-top:14px"></div>
+    <div id="data-preview" style="margin-top:14px"></div>
+
+    <div style="margin-top:20px" class="card">
+      <div class="card-title">Cấu trúc cột yêu cầu</div>
+      <table><thead><tr><th>Cột</th><th>Kiểu</th><th>Ghi chú</th></tr></thead><tbody>
+        <tr><td><code style="color:var(--teal)">order_id</code></td><td>string</td><td>Mã đơn hàng</td></tr>
+        <tr><td><code style="color:var(--teal)">customer_id</code></td><td>string</td><td>Mã khách hàng</td></tr>
+        <tr><td><code style="color:var(--teal)">order_date</code></td><td>YYYY-MM-DD</td><td>Ngày đặt hàng</td></tr>
+        <tr><td><code style="color:var(--teal)">price</code></td><td>number</td><td>Giá gốc</td></tr>
+        <tr><td><code style="color:var(--teal)">discount</code></td><td>0–1</td><td>Tỷ lệ giảm giá</td></tr>
+        <tr><td><code style="color:var(--teal)">quantity</code></td><td>number</td><td>Số lượng</td></tr>
+        <tr><td><code style="color:var(--teal)">total_amount</code></td><td>number</td><td>Tổng đơn</td></tr>
+        <tr><td><code style="color:var(--teal)">profit_margin</code></td><td>number</td><td>Lợi nhuận</td></tr>
+        <tr><td><code style="color:var(--teal)">category</code></td><td>string</td><td>Danh mục</td></tr>
+        <tr><td><code style="color:var(--teal)">region</code></td><td>string</td><td>Khu vực</td></tr>
+        <tr><td><code style="color:var(--teal)">shipping_cost</code></td><td>number</td><td>Phí ship</td></tr>
+        <tr><td><code style="color:var(--teal)">returned</code></td><td>Yes/No</td><td>Trả hàng</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ═══ DRILL-DOWN MODAL ═══ -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Chi tiết</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let API = localStorage.getItem('bi_api_url') || 'http://localhost:8000';
+let dataLoaded = false;
+let uploadInfo = null;
+let currentPage = 'overview';
+let charts = {};
+let optTimer = null;
+let forecastState = { ready:false, target_metric:null, horizon:null, model:null, scenario:null };
+
+const SEGMENT_COLORS = {
+  'Champions':'#22d3a0','Loyal Customers':'#4f7cff','Potential Loyalists':'#7c5fff',
+  'New Customers':'#0ec6d5','Promising':'#f5a623','Need Attention':'#d97ef5',
+  'About to Sleep':'#f06060',"Can't Lose":'#facc15','At Risk':'#fb923c',
+  'Hibernating':'#94a3b8','Low Value':'#64748b'
+};
+const SEGMENT_ACTION = {
+  'Champions':'Duy trì và upsell chọn lọc',
+  'Loyal Customers':'Giữ chân và tăng tần suất',
+  'Potential Loyalists':'Nuôi dưỡng để nâng hạng',
+  'New Customers':'Kích hoạt mua lần 2',
+  'Promising':'Thử nghiệm ưu đãi nhẹ',
+  'Need Attention':'Tái kích hoạt có kiểm soát',
+  'About to Sleep':'Phân bổ vừa phải để cứu vãn',
+  "Can't Lose":'Ưu tiên cao để giữ khách giá trị',
+  'At Risk':'Ưu tiên tái kích hoạt',
+  'Hibernating':'Chỉ remarketing chi phí thấp',
+  'Low Value':'Ngân sách tối thiểu'
+};
+
+// ── Filters ──────────────────────────────────────────
+function getFilters() {
+  return {
+    date_from: document.getElementById('f-from').value || null,
+    date_to:   document.getElementById('f-to').value   || null,
+    categories: document.getElementById('f-cat').value ? [document.getElementById('f-cat').value] : null,
+    regions:    document.getElementById('f-region').value ? [document.getElementById('f-region').value] : null,
+  };
+}
+
+function applyFilters() {
+  renderFilterChips();
+  reloadCurrentPage();
+}
+
+function resetFilters() {
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
+  document.getElementById('f-cat').value = '';
+  document.getElementById('f-region').value = '';
+  renderFilterChips();
+  reloadCurrentPage();
+}
+
+function renderFilterChips() {
+  const f = getFilters();
+  const chips = [];
+  if (f.date_from) chips.push({label:`Từ ${f.date_from}`, key:'date_from'});
+  if (f.date_to)   chips.push({label:`Đến ${f.date_to}`, key:'date_to'});
+  if (f.categories) chips.push({label:`Cat: ${f.categories[0]}`, key:'cat'});
+  if (f.regions)    chips.push({label:`Region: ${f.regions[0]}`, key:'region'});
+  document.getElementById('active-filter-chips').innerHTML = chips.map(c=>
+    `<span class="filter-chip">${c.label}<button onclick="clearFilter('${c.key}')">×</button></span>`
+  ).join('');
+}
+
+function clearFilter(key) {
+  if (key==='date_from') document.getElementById('f-from').value='';
+  if (key==='date_to')   document.getElementById('f-to').value='';
+  if (key==='cat')       document.getElementById('f-cat').value='';
+  if (key==='region')    document.getElementById('f-region').value='';
+  applyFilters();
+}
+
+function populateFilters(info) {
+  const catSel = document.getElementById('f-cat');
+  const regSel = document.getElementById('f-region');
+  catSel.innerHTML = '<option value="">Tất cả</option>' +
+    info.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+  regSel.innerHTML = '<option value="">Tất cả</option>' +
+    info.regions.map(r=>`<option value="${r}">${r}</option>`).join('');
+  document.getElementById('f-from').value = info.date_min.slice(0,10);
+  document.getElementById('f-to').value   = info.date_max.slice(0,10);
+}
+
+// ── Navigation ────────────────────────────────────────
+function nav(id, el) {
+  if (id==='eda') id='overview';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  currentPage = id;
+  if (id==='optimizer') updateOptimizerForecastStatus();
+  if(dataLoaded) reloadCurrentPage();
+}
+
+function reloadCurrentPage() {
+  if (!dataLoaded) return;
+  if (currentPage==='overview') loadOverview();
+  if (currentPage==='rfm')      loadRFM();
+  if (currentPage==='forecast') loadForecast();
+  if (currentPage==='optimizer') { updateOptimizerForecastStatus(); loadOptimizer(); }
+}
+
+// ── API ───────────────────────────────────────────────
+async function callAPI(endpoint, body={}) {
+  const r = await fetch(`${API}${endpoint}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({}));
+    throw new Error(err.detail || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+async function checkApi() {
+  const url = document.getElementById('api-url-input').value.trim();
+  API = url;
+  const badge = document.getElementById('api-status-badge');
+  const txt   = document.getElementById('api-status-text');
+  badge.className = 'api-status wait'; txt.textContent = 'Đang kiểm tra…';
+  try {
+    const r = await fetch(`${API}/health`);
+    const d = await r.json();
+    badge.className = 'api-status ok';
+    txt.textContent = d.has_data ? `Kết nối · ${d.rows} rows` : 'Kết nối · Chưa có data';
+    document.getElementById('api-url-input').value = API;
+  } catch(e) {
+    badge.className = 'api-status err';
+    txt.textContent = 'Không kết nối được';
+  }
+}
+
+function saveApiUrl() {
+  API = document.getElementById('api-url-input').value.trim();
+  localStorage.setItem('bi_api_url', API);
+  checkApi();
+updateOptimizerForecastStatus();
+}
+
+// ── File upload ───────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('dragging');
+  uploadFile(e.dataTransfer.files[0]);
+}
+
+async function uploadFile(file) {
+  if (!file || !file.name.endsWith('.csv')) {
+    showUploadStatus('error','Chỉ hỗ trợ file .csv');
+    return;
+  }
+  showUploadStatus('loading', `Đang xử lý ${file.name}…`);
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch(`${API}/upload`, {method:'POST', body:fd});
+    if (!r.ok) {
+      const e = await r.json();
+      showUploadStatus('error', e.detail || 'Upload thất bại');
+      return;
+    }
+    uploadInfo = await r.json();
+    dataLoaded = true;
+    forecastState = { ready:false, target_metric:null, horizon:null, model:null, scenario:null };
+    populateFilters(uploadInfo);
+    document.getElementById('global-filter-bar').style.display = 'flex';
+
+    // Update API status
+    document.getElementById('api-status-badge').className = 'api-status ok';
+    document.getElementById('api-status-text').textContent = `${uploadInfo.rows.toLocaleString()} rows loaded`;
+
+    showUploadStatus('success',
+      `✓ ${file.name} · ${uploadInfo.rows.toLocaleString()} bản ghi · ${uploadInfo.date_min.slice(0,10)} → ${uploadInfo.date_max.slice(0,10)}`);
+
+    // Preview
+    const sample = uploadInfo.sample;
+    if (sample && sample.length) {
+      const cols = Object.keys(sample[0]);
+      let h = `<div class="card"><div class="card-title">Xem trước (5 dòng đầu)</div><div style="overflow-x:auto"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+      sample.forEach(row => { h += `<tr>${cols.map(c=>`<td>${row[c]??''}</td>`).join('')}</tr>`; });
+      h += '</tbody></table></div></div>';
+      document.getElementById('data-preview').innerHTML = h;
+    }
+
+    // Auto-load overview
+    loadOverview();
+  } catch(e) {
+    showUploadStatus('error', `Lỗi: ${e.message}. Kiểm tra API đang chạy chưa?`);
+  }
+}
+
+
+function updateOptimizerForecastStatus() {
+  const el = document.getElementById('opt-forecast-status');
+  if (!el) return;
+  if (!forecastState.ready) {
+    el.innerHTML = '<span style="color:var(--red)">⚠ Chưa có forecast.</span> Vào tab <b>Dự báo & Kế hoạch</b> và chạy forecast với <b>Revenue</b>, <b>Quantity</b> hoặc <b>Orders</b>.';
+    return;
+  }
+  el.innerHTML = `<span style="color:var(--green)">✓ Forecast sẵn sàng</span> · Target: <b>${forecastState.target_metric || 'N/A'}</b> · Horizon: <b>${forecastState.horizon} tuần</b> · Model: <b>${forecastState.model}</b> · Scenario: <b>${forecastState.scenario}</b>`;
+}
+function showUploadStatus(type, msg) {
+  const colors = {loading:'var(--text3)', success:'var(--green)', error:'var(--red)'};
+  document.getElementById('upload-status').innerHTML =
+    `<div style="color:${colors[type]};font-size:13px;padding:8px 0;display:flex;align-items:center;gap:8px">
+      ${type==='loading'?'<div class="spinner"></div>':''}${msg}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  OVERVIEW
+// ══════════════════════════════════════════════════════
+async function loadOverview() {
+  try {
+    const d = await callAPI('/overview', getFilters());
+    const k = d.kpis;
+
+    document.getElementById('ov-sub').textContent =
+      `${k.total_orders.toLocaleString()} đơn · ${k.unique_customers.toLocaleString()} khách · Dữ liệu thực`;
+
+    // Insights
+    const insightColor = {info:'var(--accent)',warning:'var(--amber)',danger:'var(--red)',anomaly:'var(--red)'};
+    document.getElementById('ov-insights').innerHTML = d.insights.map(i=>
+      `<div class="insight ${i.type}">
+        <div class="insight-dot" style="background:${insightColor[i.type]||'var(--text3)'}"></div>
+        ${i.text}
+      </div>`
+    ).join('');
+
+    // KPIs
+    document.getElementById('ov-kpis').innerHTML = `
+      <div class="kpi"><div class="kpi-label">Tổng doanh thu</div>
+        <div class="kpi-value" style="color:var(--accent)">${fmtM(k.total_revenue)}</div>
+        <div class="kpi-delta neutral">${k.total_orders.toLocaleString()} đơn hàng</div></div>
+      <div class="kpi"><div class="kpi-label">Tổng lợi nhuận</div>
+        <div class="kpi-value" style="color:var(--green)">${fmtM(k.total_profit)}</div>
+        <div class="kpi-delta neutral">${fmtPct(k.total_profit/k.total_revenue)} margin</div></div>
+      <div class="kpi"><div class="kpi-label">AOV</div>
+        <div class="kpi-value" style="color:var(--teal)">${k.aov.toFixed(1)}</div>
+        <div class="kpi-delta neutral">Trung bình/đơn</div></div>
+      <div class="kpi"><div class="kpi-label">Tỷ lệ hoàn trả</div>
+        <div class="kpi-value" style="color:var(--amber)">${fmtPct(k.return_rate)}</div>
+        <div class="kpi-delta ${k.neg_profit_rate>0.15?'down':'neutral'}">${fmtPct(k.neg_profit_rate)} đơn lỗ</div></div>
+    `;
+
+    // Revenue trend
+    const months = d.monthly.map(m=>m.month);
+    const revs   = d.monthly.map(m=>m.revenue);
+    const anomPts = d.monthly.map((m,i)=>m.is_anomaly ? {x:i,y:m.revenue} : null).filter(Boolean);
+
+    mk('c-trend',{type:'line',data:{
+      labels:months,
+      datasets:[
+        {data:revs,borderColor:'#4f7cff',backgroundColor:'rgba(79,124,255,0.06)',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#4f7cff',label:'Doanh thu'},
+        {type:'scatter',data:anomPts.map(p=>({x:months[p.x],y:p.y})),backgroundColor:'#f06060',pointRadius:7,pointStyle:'circle',label:'Anomaly'}
+      ]
+    },options:{...BASE_OPTS,plugins:{...BASE_OPTS.plugins,legend:{display:true,position:'top',labels:{color:'#8b909e',font:{size:11},boxWidth:10,usePointStyle:true}}}}});
+
+    // Category pie
+    const cats  = d.by_category.map(c=>c.category);
+    const cRevs = d.by_category.map(c=>c.revenue);
+    const CAT_COLORS = ['#4f7cff','#7c5fff','#22d3a0','#d97ef5','#f5a623','#f06060','#0ec6d5','#facc15'];
+    mk('c-cat-pie',{type:'doughnut',data:{labels:cats,datasets:[{data:cRevs,backgroundColor:CAT_COLORS.slice(0,cats.length),borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:'#8b909e',font:{size:10},boxWidth:8}},tooltip:BASE_OPTS.plugins.tooltip}}});
+
+    // Region bar
+    const regs  = d.by_region.map(r=>r.region);
+    const rRevs = d.by_region.map(r=>r.revenue);
+    mk('c-region',{type:'bar',data:{labels:regs,datasets:[{data:rRevs,backgroundColor:'rgba(79,124,255,0.65)',borderRadius:5,label:'Doanh thu'}]},options:BASE_OPTS});
+
+    // Profit rate by cat
+    const pRates = d.by_category.map(c=>+(c.profit_rate*100).toFixed(1));
+    mk('c-profit-cat',{type:'bar',data:{labels:cats,datasets:[{data:pRates,backgroundColor:pRates.map(v=>v<0?'rgba(240,96,96,.65)':'rgba(34,211,160,.65)'),borderRadius:5}]},
+      options:{...BASE_OPTS,scales:{...BASE_OPTS.scales,y:{...BASE_OPTS.scales.y,ticks:{...BASE_OPTS.scales.y.ticks,callback:v=>v+'%'}}}}});
+
+    // Monthly table
+    const tbody = document.getElementById('ov-monthly-body');
+    tbody.innerHTML = d.monthly.map(m=>{
+      const momCls = m.rev_mom > 0 ? 'up':'down';
+      const anomHtml = m.is_anomaly ? '<span class="anom-badge">⚠ anomaly</span>' : '<span class="badge bg">Normal</span>';
+      return `<tr class="${m.is_anomaly?'anomaly':''}" onclick="drillMonth('${m.month}',${m.revenue},${m.profit},${m.orders})" style="cursor:pointer">
+        <td style="font-family:var(--mono)">${m.month}</td>
+        <td style="font-family:var(--mono)">${fmtK(m.revenue)}</td>
+        <td style="font-family:var(--mono)">${fmtK(m.profit)}</td>
+        <td style="font-family:var(--mono)">${m.orders.toLocaleString()}</td>
+        <td class="${momCls}" style="font-family:var(--mono)">${m.rev_mom>=0?'+':''}${fmtPct(m.rev_mom)}</td>
+        <td>${anomHtml}</td>
+      </tr>`;
+    }).join('');
+
+    loadOverviewEDA();
+  } catch(e) {
+    showErr('ov-kpis', e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  EDA
+// ══════════════════════════════════════════════════════
+async function loadOverviewEDA() {
+  const c = document.getElementById('ov-eda-content');
+  if (!c) return;
+  c.innerHTML = '<div class="page-loader"><div class="spinner"></div>Đang tính EDA…</div>';
+  try {
+    const d = await callAPI('/eda', getFilters());
+
+    c.innerHTML = `
+      <div class="chart-row g2">
+        <div class="card"><div class="card-title">Số đơn & profit rate theo discount band</div><div class="chart-wrap" style="height:200px"><canvas id="ov-c-disc-analysis"></canvas></div></div>
+        <div class="card"><div class="card-title">Tỷ lệ hoàn trả theo danh mục</div><div class="chart-wrap" style="height:200px"><canvas id="ov-c-return"></canvas></div></div>
+      </div>
+      ${d.by_age.length ? `
+      <div class="chart-row g1">
+        <div class="card"><div class="card-title">Doanh thu theo nhóm tuổi</div><div class="chart-wrap" style="height:180px"><canvas id="ov-c-age"></canvas></div></div>
+      </div>` : ''}
+      <div class="card">
+        <div class="section-header"><div><div class="section-title">Ma trận tương quan</div><div class="section-sub">Giá trị từ −1 (tương quan âm) đến +1 (tương quan dương)</div></div></div>
+        <div class="corr-wrap" id="ov-corr-div"></div>
+      </div>
+    `;
+
+    const discBands = d.discount_analysis.map(x=>x.discount_band);
+    const discOrders = d.discount_analysis.map(x=>x.orders);
+    const discPR = d.discount_analysis.map(x=>+(x.profit_rate*100).toFixed(1));
+    mk('ov-c-disc-analysis',{type:'bar',data:{labels:discBands,datasets:[
+      {label:'Số đơn',data:discOrders,backgroundColor:'rgba(79,124,255,.6)',borderRadius:4,yAxisID:'y'},
+      {type:'line',label:'Profit rate %',data:discPR,borderColor:'#22d3a0',backgroundColor:'transparent',tension:0.3,pointRadius:4,yAxisID:'y1'}
+    ]},options:{...BASE_OPTS,plugins:{...BASE_OPTS.plugins,legend:{display:true,position:'top',labels:{color:'#8b909e',font:{size:11},boxWidth:10}}},
+      scales:{x:BASE_OPTS.scales.x,y:{...BASE_OPTS.scales.y,position:'left'},y1:{...BASE_OPTS.scales.y,position:'right',ticks:{...BASE_OPTS.scales.y.ticks,callback:v=>v+'%'},grid:{display:false}}}}});
+
+    const retCats = Object.keys(d.category_return);
+    const retVals = retCats.map(c=>+(d.category_return[c]*100).toFixed(1));
+    mk('ov-c-return',{type:'bar',data:{labels:retCats,datasets:[{data:retVals,backgroundColor:retVals.map(v=>v>6?'rgba(240,96,96,.65)':'rgba(14,198,213,.65)'),borderRadius:4}]},
+      options:{...BASE_OPTS,scales:{...BASE_OPTS.scales,y:{...BASE_OPTS.scales.y,ticks:{...BASE_OPTS.scales.y.ticks,callback:v=>v+'%'}}}}});
+
+    if (d.by_age.length) {
+      mk('ov-c-age',{type:'bar',data:{labels:d.by_age.map(x=>x.age_group||x['age_group']),datasets:[{data:d.by_age.map(x=>x.revenue),backgroundColor:'rgba(124,95,255,.65)',borderRadius:4}]},options:BASE_OPTS});
+    }
+
+    const vars = d.correlation.labels;
+    const mat  = d.correlation.matrix;
+    let html = `<div style="display:grid;grid-template-columns:90px repeat(${vars.length},1fr);gap:2px;font-size:11px;min-width:400px">`;
+    html += `<div></div>` + vars.map(v=>`<div style="text-align:center;color:var(--text3);padding:4px 2px;font-size:10px;font-family:var(--mono)">${v.replace('_','_​')}</div>`).join('');
+    mat.forEach((row,i)=>{
+      html += `<div style="display:flex;align-items:center;color:var(--text3);font-size:10px;padding-right:6px;font-family:var(--mono)">${vars[i]}</div>`;
+      row.forEach((v,j)=>{
+        const abs=Math.abs(v);
+        let bg,col;
+        if(i===j){bg='rgba(79,124,255,.2)';col='#4f7cff';}
+        else if(v>0){bg=`rgba(34,211,160,${abs*.55})`;col=abs>.5?'#22d3a0':'#8b909e';}
+        else{bg=`rgba(240,96,96,${abs*.55})`;col=abs>.3?'#f06060':'#8b909e';}
+        html+=`<div style="background:${bg};color:${col};text-align:center;padding:8px 2px;border-radius:4px;font-family:var(--mono);font-size:11px" title="${vars[i]} × ${vars[j]} = ${v}">${v.toFixed(2)}</div>`;
+      });
+    });
+    html+='</div>';
+    document.getElementById('ov-corr-div').innerHTML=html;
+
+  } catch(e) {
+    forecastState.ready = false;
+    updateOptimizerForecastStatus();
+    c.innerHTML=`<div style="color:var(--red);padding:20px">${e.message}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  RFM
+// ══════════════════════════════════════════════════════
+async function loadRFM() {
+  const c = document.getElementById('rfm-content');
+  c.innerHTML = '<div class="page-loader"><div class="spinner"></div>Đang tính RFM…</div>';
+  try {
+    const d = await callAPI('/rfm', { ...getFilters(), total_budget: parseFloat(document.getElementById('rfm-budget').value)||5000000 });
+    const segs = d.segment_summary;
+    const stats = d.rfm_stats;
+
+    c.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Tổng khách hàng</div><div class="kpi-value" style="color:var(--accent)">${stats.total_customers.toLocaleString()}</div><div class="kpi-delta neutral">Đã phân khúc</div></div>
+        <div class="kpi"><div class="kpi-label">Recency median</div><div class="kpi-value" style="color:var(--teal)">${Math.round(stats.recency_median)} ngày</div></div>
+        <div class="kpi"><div class="kpi-label">Frequency median</div><div class="kpi-value" style="color:var(--green)">${stats.frequency_median.toFixed(1)} đơn</div></div>
+        <div class="kpi"><div class="kpi-label">Monetary median</div><div class="kpi-value" style="color:var(--amber)">${fmtK(stats.monetary_median)}</div></div>
+      </div>
+      <div style="margin:-2px 0 14px 0;padding:10px 12px;background:rgba(79,124,255,.06);border:1px solid rgba(79,124,255,.18);border-radius:8px;font-size:12px;color:var(--text2)">
+        Tổng budget đang phân bổ: <b>${fmtK(stats.total_budget)}</b> · phân bổ theo customer share, monetary share, frequency và recency.
+      </div>
+
+      <!-- Row 1: Treemap + Score bars -->
+      <div class="chart-row" style="grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card">
+          <div class="card-title">Category wise customer (Treemap phân khúc)</div>
+          <div id="rfm-treemap" style="width:100%;height:320px;position:relative"></div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <div class="card-title">Avg. R value by R Score</div>
+            <div class="chart-wrap" style="height:88px"><canvas id="c-rfm-r-score"></canvas></div>
+          </div>
+          <div>
+            <div class="card-title">Avg. of F Value by F Score</div>
+            <div class="chart-wrap" style="height:88px"><canvas id="c-rfm-f-score"></canvas></div>
+          </div>
+          <div>
+            <div class="card-title">Avg. of M Value by M Score</div>
+            <div class="chart-wrap" style="height:88px"><canvas id="c-rfm-m-score"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Matrix R×F + Profit bar -->
+      <div class="chart-row g2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-title">RFM Customer Segmentation Matrix</div>
+          <div id="rfm-matrix" style="overflow:auto"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Profit by Segment</div>
+          <div class="chart-wrap" style="height:280px"><canvas id="c-rfm-profit"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Voucher strategy table -->
+      <div class="card">
+        <div class="section-header"><div><div class="section-title">Đề xuất phân bổ budget theo segment</div><div class="section-sub">Dựa trên RFM thực · budget được chia theo trọng số segment</div></div></div>
+        <table><thead><tr><th>Phân khúc</th><th>Khách hàng</th><th>Avg Recency</th><th>Avg Monetary</th><th>Tỷ trọng budget</th><th>Budget</th><th>Hành động</th></tr></thead>
+        <tbody id="rfm-table-body"></tbody></table>
+      </div>
+    `;
+
+    // ── Treemap ──
+    drawRFMTreemap(segs);
+
+    // ── Score bar charts ──
+    const scoreBarOpts = (lbl) => ({
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip: BASE_OPTS.plugins.tooltip },
+      scales: {
+        x: { grid:{display:false}, ticks:{color:'#8b909e',font:{size:10}} },
+        y: { display:false, grid:{display:false} }
+      },
+      layout: { padding: { top: 20 } },
+      plugins2: {}
+    });
+
+    const scoreBarCfg = (scores, vals, color, fmtFn) => ({
+      type:'bar',
+      data:{
+        labels: scores,
+        datasets:[{
+          data: vals,
+          backgroundColor: color,
+          borderRadius: 4,
+          barPercentage: 0.55
+        }]
+      },
+      options: {
+        ...scoreBarOpts(),
+        plugins: {
+          legend:{display:false},
+          tooltip: BASE_OPTS.plugins.tooltip,
+          datalabels: {display:false}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#8b909e',font:{size:10}}},
+          y:{display:false}
+        },
+        animation:{duration:600},
+        layout:{padding:{top:18}}
+      },
+      plugins: [{
+        id:'topLabel',
+        afterDatasetsDraw(chart){
+          const ctx=chart.ctx;
+          chart.data.datasets[0].data.forEach((val,i)=>{
+            const meta=chart.getDatasetMeta(0);
+            const bar=meta.data[i];
+            ctx.save();
+            ctx.fillStyle='#e8eaf0';
+            ctx.font='bold 10px JetBrains Mono, monospace';
+            ctx.textAlign='center';
+            ctx.fillText(fmtFn(val), bar.x, bar.y-5);
+            ctx.restore();
+          });
+        }
+      }]
+    });
+
+    const rScores = (d.r_by_score||[]).map(x=>x.score);
+    const rVals   = (d.r_by_score||[]).map(x=>x.avg_val);
+    const fScores = (d.f_by_score||[]).map(x=>x.score);
+    const fVals   = (d.f_by_score||[]).map(x=>x.avg_val);
+    const mScores = (d.m_by_score||[]).map(x=>x.score);
+    const mVals   = (d.m_by_score||[]).map(x=>x.avg_val);
+
+    mk('c-rfm-r-score', scoreBarCfg(rScores, rVals, 'rgba(119,170,100,0.8)', v=>v.toFixed(1)));
+    mk('c-rfm-f-score', scoreBarCfg(fScores, fVals, 'rgba(14,198,213,0.75)', v=>v.toFixed(2)));
+    mk('c-rfm-m-score', scoreBarCfg(mScores, mVals, 'rgba(124,95,255,0.75)', v=>fmtK(v)));
+
+    // ── RFM matrix ──
+    drawRFMMatrix(d.matrix || [], stats.total_customers || 0);
+
+
+    // ── Profit by Segment bar ──
+    const profData = (d.profit_by_segment||[]).slice(0,10);
+    const profLabels = profData.map(x=>x.Segment||x.segment||'');
+    const profVals   = profData.map(x=>x.total_profit||0);
+    mk('c-rfm-profit',{
+      type:'bar',
+      data:{labels: profLabels, datasets:[{
+        data: profVals,
+        backgroundColor: profLabels.map(l=>hexA(SEGMENT_COLORS[l]||'#4f7cff',0.75)),
+        borderRadius: 5
+      }]},
+      options:{
+        ...BASE_OPTS,
+        plugins:{...BASE_OPTS.plugins, legend:{display:false}},
+        scales:{
+          x:{...BASE_OPTS.scales.x, ticks:{...BASE_OPTS.scales.x.ticks, maxRotation:35, font:{size:10}}},
+          y:{...BASE_OPTS.scales.y, ticks:{...BASE_OPTS.scales.y.ticks, callback:v=>fmtK(v)}}
+        }
+      }
+    });
+
+    // ── Table ──
+    document.getElementById('rfm-table-body').innerHTML = segs.map(s=>{
+      const action = SEGMENT_ACTION[s.Segment] || 'Phân bổ theo hiệu quả thực tế';
+      const col = SEGMENT_COLORS[s.Segment]||'#4f7cff';
+      const share = (s.budget_share*100).toFixed(1) + '%';
+      return `<tr onclick="drillSegment('${s.Segment}',${JSON.stringify(s).replace(/'/g,"'")})" style="cursor:pointer">
+        <td><span style="display:inline-flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0"></span>${s.Segment}
+        </span></td>
+        <td style="font-family:var(--mono)">${s.count.toLocaleString()}</td>
+        <td style="font-family:var(--mono)">${Math.round(s.avg_recency)} ngày</td>
+        <td style="font-family:var(--mono)">${fmtK(s.avg_monetary)}</td>
+        <td><span class="badge bb">${share}</span></td>
+        <td style="font-family:var(--mono)">${fmtK(s.budget_amount)}</td>
+        <td style="font-size:12px;color:var(--text3)">${action}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { c.innerHTML=`<div style="color:var(--red);padding:20px">${e.message}</div>`; }
+}
+
+function drawRFMTreemap(segs) {
+  const container = document.getElementById('rfm-treemap');
+  if (!container) return;
+
+  const total = segs.reduce((s, x) => s + x.count, 0);
+  if (!total) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const sorted = [...segs].sort((a, b) => b.count - a.count);
+  const W = container.clientWidth || container.offsetWidth || 520;
+  const H = 320;
+
+  function splitTreemap(items, x, y, w, h) {
+    if (!items.length || w <= 0 || h <= 0) return [];
+    if (items.length === 1) return [{ ...items[0], x, y, w, h }];
+
+    const totalVal = items.reduce((s, it) => s + it.count, 0);
+    let acc = 0;
+    let splitIdx = 0;
+    for (let i = 0; i < items.length; i++) {
+      acc += items[i].count;
+      splitIdx = i + 1;
+      if (acc >= totalVal / 2) break;
+    }
+
+    const leftItems = items.slice(0, splitIdx);
+    const rightItems = items.slice(splitIdx);
+    if (!rightItems.length) {
+      return splitTreemap(leftItems.slice(0, -1), x, y, w * 0.5, h)
+        .concat(splitTreemap(leftItems.slice(-1), x + w * 0.5, y, w * 0.5, h));
+    }
+
+    const leftSum = leftItems.reduce((s, it) => s + it.count, 0);
+    const ratio = leftSum / totalVal;
+
+    if (w >= h) {
+      const w1 = w * ratio;
+      return [
+        ...splitTreemap(leftItems, x, y, w1, h),
+        ...splitTreemap(rightItems, x + w1, y, w - w1, h)
+      ];
+    }
+
+    const h1 = h * ratio;
+    return [
+      ...splitTreemap(leftItems, x, y, w, h1),
+      ...splitTreemap(rightItems, x, y + h1, w, h - h1)
+    ];
+  }
+
+  const rects = splitTreemap(sorted, 0, 0, W, H);
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:100%;border-radius:8px;overflow:hidden">`;
+
+  rects.forEach(r => {
+    const col = SEGMENT_COLORS[r.Segment] || '#4f7cff';
+    const pct = ((r.count / total) * 100).toFixed(1);
+    const countLabel = `${(r.count / 1000).toFixed(1)}K`;
+    const innerX = r.x + 1;
+    const innerY = r.y + 1;
+    const innerW = Math.max(r.w - 2, 0);
+    const innerH = Math.max(r.h - 2, 0);
+
+    svg += `<rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="${col}" opacity="0.82" rx="3"/>`;
+
+    const showFull = innerW > 90 && innerH > 48;
+    const showCompact = innerW > 42 && innerH > 22;
+
+    if (showFull) {
+      const fontSize = Math.max(10, Math.min(13, innerW / Math.max(r.Segment.length * 0.7, 1)));
+      svg += `<text x="${r.x + r.w / 2}" y="${r.y + r.h / 2 - 10}" text-anchor="middle" font-family="Sora,sans-serif" font-size="${fontSize}" fill="white" font-weight="600">${r.Segment}</text>`;
+      svg += `<text x="${r.x + r.w / 2}" y="${r.y + r.h / 2 + 10}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="rgba(255,255,255,0.92)">${countLabel}</text>`;
+      if (innerH > 72) {
+        svg += `<text x="${r.x + r.w / 2}" y="${r.y + r.h / 2 + 28}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(255,255,255,0.78)">${pct}%</text>`;
+      }
+    } else if (showCompact) {
+      svg += `<text x="${r.x + r.w / 2}" y="${r.y + r.h / 2 + 4}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(255,255,255,0.88)">${countLabel}</text>`;
+    }
+  });
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
+function drawRFMMatrix(matrixData, totalCustomers) {
+  const container = document.getElementById('rfm-matrix');
+  if (!container) return;
+
+  const freqLevels = [5,4,3,2,1];
+  const recLevels = [1,2,3,4,5];
+  const lookup = {};
+  (matrixData || []).forEach(row => {
+    lookup[`${row.R}-${row.F}`] = row;
+  });
+
+  let html = `<div style="min-width:760px">`;
+  html += `<div style="text-align:center;font-size:14px;font-weight:600;margin-bottom:10px">RFM Customer Segmentation Matrix</div>`;
+  html += `<div style="display:grid;grid-template-columns:80px repeat(5,1fr);border:1px solid var(--border);border-radius:10px;overflow:hidden">`;
+  html += `<div style="background:var(--bg3);border-right:1px solid var(--border);border-bottom:1px solid var(--border)"></div>`;
+  recLevels.forEach(r => {
+    html += `<div style="background:var(--bg3);padding:10px 6px;text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-weight:600;color:var(--text2)">${r}</div>`;
+  });
+
+  freqLevels.forEach((f, rowIdx) => {
+    html += `<div style="background:var(--bg3);padding:16px 8px;text-align:center;border-right:1px solid var(--border);border-bottom:${rowIdx===freqLevels.length-1?'0':'1px solid var(--border)'};font-weight:600;color:var(--text2)">${f}</div>`;
+    recLevels.forEach((r, colIdx) => {
+      const cell = lookup[`${r}-${f}`] || {count:0, segment:'Low Value'};
+      const seg = cell.segment || 'Low Value';
+      const pct = totalCustomers ? ((cell.count || 0) / totalCustomers * 100) : 0;
+      const borderRight = colIdx===recLevels.length-1 ? '0' : '1px solid var(--border)';
+      const borderBottom = rowIdx===freqLevels.length-1 ? '0' : '1px solid var(--border)';
+      html += `
+        <div style="background:${hexA(SEGMENT_COLORS[seg] || '#64748b', 0.28)};padding:16px 10px;min-height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-right:${borderRight};border-bottom:${borderBottom}">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${pct.toFixed(1)}%</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:4px">${(cell.count || 0).toLocaleString()}</div>
+          <div style="font-size:12px;color:var(--text);margin-top:10px;line-height:1.35">${seg}</div>
+        </div>`;
+    });
+  });
+
+  html += `</div>`;
+  html += `<div style="display:flex;justify-content:center;gap:24px;margin-top:10px;font-size:11px;color:var(--text3)">`;
+  html += `<span>Recency Score →</span><span style="transform:rotate(-90deg);display:inline-block">Frequency Score →</span>`;
+  html += `</div></div>`;
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+//  FORECAST
+// ══════════════════════════════════════════════════════
+async function loadForecast() {
+  const c = document.getElementById('forecast-content');
+  c.innerHTML = '<div class="page-loader"><div class="spinner"></div>Đang chạy mô hình dự báo…</div>';
+  try {
+    const targetMetric = document.getElementById('fc-target').value;
+    const payload = {
+      ...getFilters(),
+      horizon:       parseInt(document.getElementById('fc-horizon').value),
+      model:         document.getElementById('fc-model').value,
+      scenario:      document.getElementById('fc-scenario').value,
+      target_metric: targetMetric,
+    };
+    const d = await callAPI('/forecast', payload);
+    forecastState = {
+      ready: true,
+      target_metric: targetMetric,
+      horizon: payload.horizon,
+      model: payload.model,
+      scenario: payload.scenario
+    };
+    updateOptimizerForecastStatus();
+    const f = d.forecast;
+    const h = d.history;
+    const m = d.metrics;
+    const bt = d.backtest || null;
+
+    const metricLabels = { revenue: 'Doanh thu', quantity: 'Số lượng', orders: 'Số đơn hàng' };
+    const metricLabel = metricLabels[targetMetric] || 'Doanh thu';
+    const fmtMetric = targetMetric === 'revenue' ? fmtK : v => Math.round(v).toLocaleString();
+    const fmtMetricM = targetMetric === 'revenue' ? fmtM : v => Math.round(v).toLocaleString();
+    const smapeVal = m.ensemble.smape;
+
+    c.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Tổng dự báo · ${metricLabel}</div><div class="kpi-value" style="color:var(--accent)">${fmtMetricM(d.total_forecast)}</div></div>
+        <div class="kpi"><div class="kpi-label">Trung bình/tuần</div><div class="kpi-value" style="color:var(--green)">${fmtMetric(d.avg_weekly)}</div></div>
+        <div class="kpi"><div class="kpi-label">Peak dự báo</div><div class="kpi-value" style="color:var(--teal)">${fmtMetric(Math.max(...f.values))}</div><div class="kpi-delta neutral">Tuần ${f.values.indexOf(Math.max(...f.values))+1}</div></div>
+        <div class="kpi"><div class="kpi-label">SMAPE (Ensemble)</div>
+          <div class="kpi-value" style="color:${smapeVal<0.1?'var(--green)':smapeVal<0.2?'var(--amber)':'var(--red)'}">${(smapeVal*100).toFixed(1)}%</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="section-header">
+          <div>
+            <div class="section-title">${metricLabel} — Lịch sử, Backtesting & Dự báo</div>
+            <div class="section-sub" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px">
+              <span><span style="display:inline-block;width:20px;height:2px;background:#4f7cff;vertical-align:middle;margin-right:4px"></span>Thực tế</span>
+              <span><span style="display:inline-block;width:20px;height:2px;background:#f5a623;border-top:2px dashed #f5a623;vertical-align:middle;margin-right:4px"></span>Backtesting (kiểm định quá khứ)</span>
+              <span><span style="display:inline-block;width:20px;height:2px;background:#22d3a0;border-top:2px dashed #22d3a0;vertical-align:middle;margin-right:4px"></span>Dự báo tương lai</span>
+              <span style="color:var(--text3);font-size:10px">Vùng mờ = khoảng tin cậy</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:300px"><canvas id="c-fc-main"></canvas></div>
+      </div>
+      <div class="chart-row g2">
+        <div class="card">
+          <div class="card-title">Metrics so sánh mô hình</div>
+          <table><thead><tr><th>Mô hình</th><th>SMAPE</th><th>WAPE</th><th>RMSE</th></tr></thead><tbody>
+            ${['gbm','sarima','ensemble'].map(mod=>`<tr>
+              <td>${mod.toUpperCase()}</td>
+              <td><span class="badge ${m[mod].smape<0.1?'bg':'ba'}">${(m[mod].smape*100).toFixed(1)}%</span></td>
+              <td>${(m[mod].wape*100).toFixed(1)}%</td>
+              <td>${fmtK(m[mod].rmse)}</td>
+            </tr>`).join('')}
+          </tbody></table>
+          ${bt ? `<div style="margin-top:12px;padding:10px 12px;background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.2);border-radius:8px;font-size:12px;color:var(--text2)">
+            💡 <b>Backtesting</b>: Đường cam đứt nét cho thấy mô hình đã dự báo chính xác thế nào trên <b>${bt.dates.length} tuần quá khứ</b> mà nó chưa từng thấy. Hai đường bám sát = mô hình đáng tin cậy.
+          </div>` : ''}
+        </div>
+        <div class="card">
+          <div class="card-title">Feature importance (GBM)</div>
+          <div id="feat-imp-div"></div>
+        </div>
+      </div>
+    `;
+
+    // ── Build chart datasets ──
+    const histN  = Math.min(h.dates.length, 52);
+    const hDates = h.dates.slice(-histN);
+    const hRevs  = h.revenue.slice(-histN);
+    const allLabels = [...hDates, ...f.dates];
+
+    // Map backtest predictions onto the label timeline
+    const btPredArr = new Array(allLabels.length).fill(null);
+    if (bt && bt.dates.length) {
+      bt.dates.forEach((dtStr, i) => {
+        const idx = allLabels.indexOf(dtStr);
+        if (idx >= 0) btPredArr[idx] = bt.predicted[i];
+      });
+    }
+
+    const datasets = [
+      {
+        label: 'Thực tế',
+        data: [...hRevs, ...new Array(f.dates.length).fill(null)],
+        borderColor: '#4f7cff', backgroundColor: 'rgba(79,124,255,0.06)',
+        fill: true, tension: .4, pointRadius: 2, borderWidth: 2
+      },
+    ];
+
+    if (bt && bt.dates.length) {
+      datasets.push({
+        label: 'Backtesting (dự báo quá khứ)',
+        data: btPredArr,
+        borderColor: '#f5a623', backgroundColor: 'transparent',
+        tension: .4, pointRadius: 3, borderWidth: 2,
+        borderDash: [4, 3], spanGaps: false,
+      });
+    }
+
+    datasets.push(
+      {
+        label: 'Dự báo',
+        data: [...new Array(hDates.length - 1).fill(null), hRevs[hRevs.length - 1], ...f.values],
+        borderColor: '#22d3a0', backgroundColor: 'transparent',
+        tension: .4, pointRadius: 3, borderWidth: 2, borderDash: [4, 3]
+      },
+      {
+        label: 'Upper',
+        data: [...new Array(hDates.length).fill(null), ...f.upper],
+        borderColor: 'transparent', backgroundColor: 'rgba(34,211,160,.07)',
+        fill: '+1', pointRadius: 0, tension: .4
+      },
+      {
+        label: 'Lower',
+        data: [...new Array(hDates.length).fill(null), ...f.lower],
+        borderColor: 'transparent', backgroundColor: 'transparent',
+        fill: false, pointRadius: 0, tension: .4
+      }
+    );
+
+    mk('c-fc-main', {
+      type: 'line',
+      data: { labels: allLabels, datasets },
+      options: {
+        ...BASE_OPTS,
+        plugins: {
+          ...BASE_OPTS.plugins,
+          legend: {
+            display: true, position: 'top',
+            labels: { color: '#8b909e', font: { size: 11 }, boxWidth: 10, usePointStyle: true,
+              filter: i => i.text !== 'Upper' && i.text !== 'Lower' }
+          },
+          tooltip: {
+            ...BASE_OPTS.plugins.tooltip,
+            callbacks: {
+              label: (ctx) => {
+                const value = ctx.parsed && typeof ctx.parsed.y === 'number' ? ctx.parsed.y : ctx.raw;
+                return `${ctx.dataset.label}: ${targetMetric === 'revenue' ? fmtK(value) : Math.round(value).toLocaleString()}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ...BASE_OPTS.scales.x },
+          y: {
+            ...BASE_OPTS.scales.y,
+            ticks: { ...BASE_OPTS.scales.y.ticks, callback: v => targetMetric === 'revenue' ? fmtK(v) : Math.round(v).toLocaleString() }
+          }
+        }
+      }
+    });
+
+    // Feature importance
+    const fi = d.feature_importance;
+    document.getElementById('feat-imp-div').innerHTML = fi.map(feat => {
+      const w = Math.round(feat.importance * 100);
+      return `<div style="margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
+          <span style="color:var(--text2);font-family:var(--mono)">${feat.name}</span>
+          <span style="color:var(--accent)">${(feat.importance*100).toFixed(1)}%</span>
+        </div>
+        <div class="progress"><div class="progress-fill" style="width:${Math.min(w*3.5,100)}%;background:var(--accent)"></div></div>
+      </div>`;
+    }).join('');
+
+  } catch(e) { c.innerHTML=`<div style="color:var(--red);padding:20px">${e.message}</div>`; }
+}
+
+// ══════════════════════════════════════════════════════
+//  OPTIMIZER
+// ══════════════════════════════════════════════════════
+function scheduleRFM() { clearTimeout(optTimer); optTimer = setTimeout(loadRFM, 400); }
+function scheduleOpt() { clearTimeout(optTimer); optTimer = setTimeout(loadOptimizer, 600); }
+
+async function loadOptimizer() {
+  const c = document.getElementById('optimizer-content');
+  updateOptimizerForecastStatus();
+
+  if (!forecastState.ready) {
+    c.innerHTML = `<div class="card"><div style="color:var(--red);font-size:13px">Optimizer bị khóa. Bạn cần chạy forecast trước.</div>
+      <div style="margin-top:8px;color:var(--text3);font-size:12px">Hãy vào tab <b>Dự báo & Kế hoạch</b> và chạy forecast với Revenue, Quantity hoặc Orders.</div></div>`;
+    return;
+  }
+
+  c.innerHTML = '<div class="page-loader"><div class="spinner"></div>Đang chạy SLSQP optimizer…</div>';
+  try {
+    const payload = {
+      ...getFilters(),
+      budget:       parseFloat(document.getElementById('opt-budget').value)||5000000,
+      min_margin:   parseFloat(document.getElementById('opt-margin').value)||0.15,
+      max_discount: parseFloat(document.getElementById('opt-maxd').value)||0.30,
+      strategy:     document.getElementById('opt-strategy').value,
+      horizon:      forecastState.horizon || parseInt(document.getElementById('fc-horizon').value) || 8,
+    };
+    const d = await callAPI('/optimizer', payload);
+    const s = d.summary;
+    const rows = d.results;
+
+    const totalFinalProfit = s.total_final_profit ?? rows.reduce((a, r) => a + (r.final_revenue * r.margin_after), 0);
+    const baselineProfit = s.total_base_profit ?? rows.reduce((a, r) => a + (r.base_revenue * (r.base_margin ?? r.margin_after)), 0);
+    const profitUplift = s.profit_uplift ?? (baselineProfit > 0 ? (totalFinalProfit / baselineProfit - 1) : 0);
+
+    c.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Doanh thu dự tính</div><div class="kpi-value" style="color:var(--accent)">${fmtM(s.total_final_revenue)}</div>
+          <div class="kpi-delta ${s.revenue_uplift>=0?'up':'down'}">${s.revenue_uplift>=0?'↑':'↓'} ${Math.abs(s.revenue_uplift*100).toFixed(1)}% vs baseline</div></div>
+        <div class="kpi"><div class="kpi-label">Lợi nhuận dự tính</div><div class="kpi-value" style="color:var(--green)">${fmtM(totalFinalProfit)}</div>
+          <div class="kpi-delta ${profitUplift>=0?'up':'down'}">${profitUplift>=0?'↑':'↓'} ${Math.abs(profitUplift*100).toFixed(1)}% vs baseline</div></div>
+        <div class="kpi"><div class="kpi-label">Budget sử dụng</div><div class="kpi-value" style="color:var(--amber)">${fmtM(s.budget_used)}</div>
+          <div class="kpi-delta neutral">${(s.budget_utilization*100).toFixed(0)}% ngân sách</div></div>
+        <div class="kpi"><div class="kpi-label">Avg discount tối ưu</div><div class="kpi-value" style="color:var(--teal)">${(rows.reduce((a,r)=>a+r.discount_opt,0)/rows.length*100).toFixed(1)}%</div></div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:1fr">
+        <div class="kpi"><div class="kpi-label">Solver</div><div class="kpi-value" style="color:${s.optimizer_success?'var(--green)':'var(--red)'}">
+          ${s.optimizer_success?'SUCCESS':'WARN'}</div><div class="kpi-delta neutral" style="font-size:10px">${s.optimizer_message.slice(0,60)}</div></div>
+      </div>
+      <div class="chart-row g2">
+        <div class="card"><div class="card-title">Discount tối ưu theo danh mục</div><div class="chart-wrap" style="height:240px"><canvas id="c-opt-d"></canvas></div></div>
+        <div class="card"><div class="card-title">Doanh thu: Baseline vs Sau tối ưu</div><div class="chart-wrap" style="height:240px"><canvas id="c-opt-rev"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">Kết quả tối ưu chi tiết · forecast target: ${s.forecast_target_metric}</div>
+        <table><thead><tr>
+          <th>Danh mục</th><th>Giá gốc</th><th>Giá vốn</th><th>Elasticity (thực)</th>
+          <th>Discount tối ưu</th><th>Doanh thu</th><th>Lợi nhuận</th><th>Margin sau</th><th>Uplift</th>
+        </tr></thead><tbody id="opt-body"></tbody></table>
+      </div>
+    `;
+
+    const cats   = rows.map(r=>r.category);
+    const discPs = rows.map(r=>+(r.discount_opt*100).toFixed(1));
+    const finRevs= rows.map(r=>r.final_revenue);
+    const baseRevs=rows.map(r=>r.base_revenue);
+
+    mk('c-opt-d',{type:'bar',data:{labels:cats,datasets:[{data:discPs,
+      backgroundColor:discPs.map(v=>v>20?'rgba(240,96,96,.65)':v>10?'rgba(245,166,35,.65)':'rgba(34,211,160,.65)'),borderRadius:4}]},
+      options:{...BASE_OPTS,scales:{...BASE_OPTS.scales,y:{...BASE_OPTS.scales.y,ticks:{...BASE_OPTS.scales.y.ticks,callback:v=>v+'%'}}}}});
+
+    mk('c-opt-rev',{type:'bar',data:{labels:cats,datasets:[
+      {label:'Baseline',data:baseRevs,backgroundColor:'rgba(85,91,106,.45)',borderRadius:4},
+      {label:'Sau tối ưu',data:finRevs,backgroundColor:'rgba(79,124,255,.65)',borderRadius:4}
+    ]},options:{...BASE_OPTS,plugins:{...BASE_OPTS.plugins,legend:{display:true,position:'top',labels:{color:'#8b909e',font:{size:11},boxWidth:10}}}}});
+
+    document.getElementById('opt-body').innerHTML = rows.map(r=>{
+      const dc=(r.discount_opt*100).toFixed(1);
+      const mc=(r.margin_after*100).toFixed(1);
+      const uplift=((r.final_revenue/r.base_revenue-1)*100).toFixed(1);
+      const dcls=r.discount_opt===0?'bt':r.discount_opt<=0.10?'bg':r.discount_opt<=0.20?'ba':'br';
+      const mcls=parseFloat(mc)>=payload.min_margin*100+3?'bg':parseFloat(mc)>=payload.min_margin*100?'ba':'br';
+      const finalProfit = r.final_revenue * r.margin_after;
+      return `<tr>
+        <td>${r.category}</td>
+        <td style="font-family:var(--mono)">${r.avg_price.toFixed(1)}</td>
+        <td style="font-family:var(--mono)">${r.avg_cost.toFixed(1)}</td>
+        <td style="font-family:var(--mono);color:var(--text3)">${r.elasticity.toFixed(2)}</td>
+        <td><span class="badge ${dcls}">${dc}%</span></td>
+        <td style="font-family:var(--mono)">${fmtK(r.final_revenue)}</td>
+        <td style="font-family:var(--mono)">${fmtK(finalProfit)}</td>
+        <td><span class="badge ${mcls}">${mc}%</span></td>
+        <td class="${parseFloat(uplift)>=0?'up':'down'}" style="font-family:var(--mono)">${parseFloat(uplift)>=0?'+':''}${uplift}%</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { c.innerHTML=`<div style="color:var(--red);padding:20px">${e.message}</div>`; }
+}
+
+// ══════════════════════════════════════════════════════
+//  DRILL-DOWN MODALS
+// ══════════════════════════════════════════════════════
+function drillMonth(month, revenue, profit, orders) {
+  document.getElementById('modal-title').textContent = `Chi tiết tháng ${month}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi"><div class="kpi-label">Doanh thu</div><div class="kpi-value" style="color:var(--accent);font-size:18px">${fmtK(revenue)}</div></div>
+      <div class="kpi"><div class="kpi-label">Lợi nhuận</div><div class="kpi-value" style="color:var(--green);font-size:18px">${fmtK(profit)}</div></div>
+      <div class="kpi"><div class="kpi-label">Đơn hàng</div><div class="kpi-value" style="color:var(--teal);font-size:18px">${orders.toLocaleString()}</div></div>
+    </div>
+    <div style="margin-top:14px;color:var(--text3);font-size:13px">
+      Profit margin: <span style="color:var(--green)">${fmtPct(profit/revenue)}</span> · 
+      AOV: <span style="color:var(--amber)">${(revenue/orders).toFixed(1)}</span>
+    </div>
+  `;
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function drillSegment(segName, seg) {
+  const action = SEGMENT_ACTION[segName] || 'Phân bổ theo hiệu quả thực tế';
+  const col = SEGMENT_COLORS[segName]||'#4f7cff';
+  document.getElementById('modal-title').textContent = segName;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:14px">
+      <div class="kpi"><div class="kpi-label">Khách hàng</div><div class="kpi-value" style="color:var(--accent);font-size:18px">${seg.count.toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-label">Total Monetary</div><div class="kpi-value" style="color:var(--green);font-size:18px">${fmtK(seg.total_monetary)}</div></div>
+      <div class="kpi"><div class="kpi-label">Tỷ trọng budget</div><div class="kpi-value" style="color:var(--teal);font-size:18px">${(seg.budget_share*100).toFixed(1)}%</div></div>
+      <div class="kpi"><div class="kpi-label">Budget</div><div class="kpi-value" style="color:var(--amber);font-size:18px">${fmtK(seg.budget_amount)}</div></div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px">
+      <div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></div>
+      <div>
+        <div style="font-size:12px;color:var(--text2)">Budget / khách hàng: <span class="badge bb">${fmtK(seg.budget_per_customer)}</span></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">${action}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-backdrop')) {
+    document.getElementById('modal-backdrop').classList.remove('open');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════
+function fmtM(n){return Math.round(Number(n || 0)).toLocaleString();}
+function fmtK(n){return Math.round(Number(n || 0)).toLocaleString();}
+function fmtPct(n){return (n*100).toFixed(1)+'%'}
+function hexA(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgba(${r},${g},${b},${a})`}
+function showErr(id,msg){document.getElementById(id).innerHTML=`<div style="color:var(--red);padding:12px">${msg}</div>`}
+
+const BASE_OPTS={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#181c24',borderColor:'rgba(255,255,255,.12)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#8b909e'}},
+  scales:{
+    x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b909e',font:{size:11},maxRotation:45,autoSkip:true,maxTicksLimit:12}},
+    y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b909e',font:{size:11}}}
+  }
+};
+
+function mk(id,cfg){
+  if(charts[id]){charts[id].destroy();delete charts[id]}
+  const el=document.getElementById(id);
+  if(!el)return;
+  charts[id]=new Chart(el,cfg);
+}
+
+function sortTable(tbodyId, col) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const rows = Array.from(tbody.rows);
+  const asc = tbody.dataset.sortCol==col ? tbody.dataset.sortDir!=='asc' : true;
+  rows.sort((a,b)=>{
+    const av=a.cells[col]?.textContent.trim().replace(/[,KM%]/g,'')||'';
+    const bv=b.cells[col]?.textContent.trim().replace(/[,KM%]/g,'')||'';
+    const n=(v)=>parseFloat(v);
+    return asc?(isNaN(n(av))?av.localeCompare(bv):n(av)-n(bv)):(isNaN(n(av))?bv.localeCompare(av):n(bv)-n(av));
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+  tbody.dataset.sortCol=col;
+  tbody.dataset.sortDir=asc?'asc':'desc';
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+document.getElementById('api-url-input').value = API;
+checkApi();
+updateOptimizerForecastStatus();
+</script>
+</body>
+</html>
